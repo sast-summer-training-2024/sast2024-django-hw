@@ -1,35 +1,47 @@
 from django.http import HttpRequest
 
+from .wrapper import api
 
-def login(request: HttpRequest):
+
+@api(allowed_methods=["POST"], needs_auth=False)
+def login(request: HttpRequest, **kwargs):
     raise NotImplementedError()
 
 
-def logout(request: HttpRequest):
+@api(allowed_methods=["POST"])
+def logout(request: HttpRequest, **kwargs):
     raise NotImplementedError()
 
 
-def listCourses(request: HttpRequest):
+@api()
+def listCourses(request: HttpRequest, **kwargs):
     raise NotImplementedError()
 
 
-def selectCourses(request: HttpRequest):
+@api(allowed_methods=["POST"])
+def selectCourses(request: HttpRequest, **kwargs):
     raise NotImplementedError()
 
 
-def listSelectedCourses(request: HttpRequest):
+@api(allowed_methods=["POST"])
+def listSelectedCourses(request: HttpRequest, **kwargs):
     raise NotImplementedError()
 
 
-def uploadCoursesList(request: HttpRequest):
+@api(allowed_methods=["POST"])
+def uploadCoursesList(request: HttpRequest, **kwargs):
     raise NotImplementedError()
 
 
-def downloadSelectionData(request: HttpRequest):
+@api()
+def downloadSelectionData(request: HttpRequest, **kwargs):
     raise NotImplementedError()
 
 
 def notFound(request: HttpRequest):
-    from django.http import HttpResponseNotFound
+    from django.http import JsonResponse
 
-    return HttpResponseNotFound('{"ok": false, "message": "Not Found"}', headers={'Content-Type': 'application/json'})
+    return JsonResponse(status=404, data={
+        "ok": False,
+        "error": "Not Found"
+    })
