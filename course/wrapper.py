@@ -87,7 +87,7 @@ def api(allowed_methods: list[str] = None, needs_auth: bool = True):
 
             # Try to parse JSON body (if any)
             data: dict | None = None
-            if request.method != "GET" and request.content_type != "":
+            if request.method != "GET" and request.content_type != "" and request.body != b"":
                 if request.content_type != "application/json":
                     return JsonResponse(status=400, data={
                         "ok": False,
@@ -106,7 +106,6 @@ def api(allowed_methods: list[str] = None, needs_auth: bool = True):
                 kwargs["request"] = request
                 kwargs["user"] = request.user
                 kwargs["data"] = data
-                kwargs["method"] = request.method
 
                 response_data = function(*args, **kwargs)
 
