@@ -119,8 +119,8 @@ def listSelectedCourses(user: User, **kwargs):
         }, ...]
     """
 
-    return [x for x in map(lambda c: {"id": c.id, "name": c.name, "teacher": c.teacher, "department": c.department,
-                                      "time": c.time}, Student.objects.get(user=user).selectedCourses.all())]
+    return [{"id": c.id, "name": c.name, "teacher": c.teacher, "department": c.department,
+             "time": c.time} for c in Student.objects.get(user=user).selectedCourses.all()]
 
 
 @api(allowed_methods=["POST"])

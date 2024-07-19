@@ -23,5 +23,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('course.urls')),
 
-    re_path('.*?', notFound),
+    re_path('.*?', notFound)
 ]
