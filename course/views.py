@@ -1,4 +1,5 @@
 import binascii
+import random
 
 from django.http import HttpRequest
 from django.contrib.auth import login as auth_login, logout as auth_logout
@@ -29,11 +30,13 @@ def login(request: HttpRequest, data: dict, **kwargs):
         return 400, "Invalid username"
 
     # TODO: If user does not exist, create one; else, login to that user.
-    if not User.objects.filter(username="test").exists():
-        u = User.objects.create_user(username="test", password="")
-        Student.objects.create(id="000", user=u)
+    if not User.objects.filter(username=username).exists():
+        u = User.objects.create_user(username=username, password="")
 
-    auth_login(request, User.objects.get(username="test"))
+        # Assign a unique random ID
+        Student.objects.create(id=random.randbytes(5).hex(), user=u)
+
+    auth_login(request, User.objects.get(username=username))
     # END TODO
 
     return
@@ -50,9 +53,7 @@ def logout(request: HttpRequest, **kwargs):
         Nothing.
     """
 
-    # TODO: Logout the user
-    raise NotImplementedError()
-    # END TODO
+    auth_logout(request)
 
 
 @api()
@@ -73,9 +74,8 @@ def listCourses(user: User, **kwargs):
     """
 
     # TODO: Retrieve all courses from DB and return them
-    courses = [{"id": "PKU009", "name": "History of Chinese Economic Thought", "teacher": "Prof. Zhou Jianbo",
-                "department": "Economics", "time": "Thu 08:00-10:00"}]
-    return courses
+    return [{"id": c.id, "name": c.name, "teacher": c.teacher, "department": c.department,
+             "time": c.time} for c in Course.objects.all()]
     # END TODO
 
 
@@ -92,7 +92,18 @@ def selectCourses(user: User, data: dict, **kwargs):
     """
 
     # TODO: Validate input and select courses for the current user
-    selected = ["PKU001", "PKU009"]
+    if "courses" not in data or type(data["courses"]) is not list:
+        return 400, "Invalid format for courses"
+
+    selected = []
+    for c in data["courses"]:
+        if type(c) is not str:
+            return 400, "Invalid type for course id"
+
+        if not Course.objects.filter(id=c).exists():
+            return 400, f"No such course with id={c}"
+
+        selected.append(c)
 
     # TODO: Update database and handle exceptions
     student = Student.objects.get(user=user)
@@ -153,7 +164,14 @@ def uploadCoursesList(user: User, data: dict, **kwargs):
 
     for line in content.split("\n"):
         # TODO: Parse each line and create a Course object, (optionally, validate it), and save to DB
-        pass
+        try:
+            course = json.loads(line)
+            Course.objects.create(id=course["id"], name=course["name"], teacher=course["teacher"],
+                                  department=course["department"], time=course["time"])
+        except json.JSONDecodeError:
+            return 400, f"Malformed JSON: {line}"
+        except KeyError:
+            return 400, f"Missing key in JSON: {line}"
         # END TODO
 
     return
@@ -179,7 +197,13 @@ def downloadSelectionData(user: User, **kwargs):
     import json
 
     # TODO: Generate the jsonl file content
-    return base64.b64encode(json.dumps([{}]).encode()).decode()
+    return base64.b64encode("\n".join([
+        json.dumps({
+            "id": s.id,
+            "name": s.user.username,
+            "selected": [c.id for c in s.selectedCourses.all()]
+        }) for s in Student.objects.all()
+    ]).encode()).decode()
     # END TODO
 
 
